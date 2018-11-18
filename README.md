@@ -20,7 +20,10 @@ This is a **forked version** of pecee/pixie 4.11.0 running on different namespac
  - Bring SQLite and PostgreSQL back, with proper Isolation Levels methods.
 
 **Why a fork?**
+
 Because I needed these features and had no time to propose it to the originals developers. Also it could break a lot of projects that are currently using pecee/pixie (4.x.x). I can collaborate with the original project and help implement these new features (if the author wants) on a next major release.
+
+** I do not intend to keep this library for long, since all of these features could be implemented on pecee / pixie in near future **
 
 ## New features example
 
