@@ -3,7 +3,7 @@
 
 # pollus/pixie: Lightweight query builder
 
-This is a **forked version** of pecee/pixie 4.11.0 running on different namespace. All the credits to original project goes to [skipperbent](https://github.com/skipperbent/pecee-pixie) and [usmanhalalit](https://github.com/usmanhalalit/pixie).
+This is a **forked version** of pecee/pixie 4.11.0 running on different namespace. All the credits goes to [skipperbent](https://github.com/skipperbent/pecee-pixie) and [usmanhalalit](https://github.com/usmanhalalit/pixie).
 
 **Major changes**
  - Simple Connection Manager (based on Capsule\Manager from Laravel), allowing multiple connections management.
