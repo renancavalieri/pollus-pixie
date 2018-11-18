@@ -28,36 +28,36 @@ Because I needed these features and had no time to propose it to the originals d
 // Using the connection manager to store multiple connections
 $databases = array
 (
-	'default' =>
-	[
-		'driver'    => 'mysql',
-		'host'      => '127.0.0.1',
-		'database'  => 'my_table',
-		'username'  => 'root',
-		'password'  => 'p4ssw0rd!',
-		'charset'   => 'utf8',
-		//'collation' => 'utf8_unicode_ci',     // optional
-		//'prefix'    => '',                    // optional
-	],
-	
-	'sessions' =>
-	[
-		'driver'    => 'mysql',
-		'host'      => '192.168.2.2',
-		'database'  => 'sessions',
-		'username'  => 'root',
-		'password'  => 'p4ssw0rd!',
-		'charset'   => 'utf8',
-		//'collation' => 'utf8_unicode_ci',     // optional
-		//'prefix'    => '',                    // optional
-	],
+    'default' =>
+    [
+        'driver'    => 'mysql',
+        'host'      => '127.0.0.1',
+        'database'  => 'my_table',
+        'username'  => 'root',
+        'password'  => 'p4ssw0rd!',
+        'charset'   => 'utf8',
+        //'collation' => 'utf8_unicode_ci',     // optional
+        //'prefix'    => '',                    // optional
+    ],
+    
+    'sessions' =>
+    [
+        'driver'    => 'mysql',
+        'host'      => '192.168.2.2',
+        'database'  => 'sessions',
+        'username'  => 'root',
+        'password'  => 'p4ssw0rd!',
+        'charset'   => 'utf8',
+        //'collation' => 'utf8_unicode_ci',     // optional
+        //'prefix'    => '',                    // optional
+    ],
 );
 
 $db = new \Pollus\Pixie\Manager();
 
 foreach ($databases as $name => $db_conf) 
 {
-	$db->addConnection($db_conf, $name);
+    $db->addConnection($db_conf, $name);
 }
 
 // but only sessions connection was instanced, because the method getConnection was invoked.
@@ -65,10 +65,10 @@ $con = $db->getConnection('sessions');
 
 // [...] later in the code, using pessimistic locking inside a transaction
 $con->newQuery()
-	->table('user_sessions')
-	->select('*')
-	->lockForUpdate()
-	->first();
+    ->table('user_sessions')
+    ->select('*')
+    ->lockForUpdate()
+    ->first();
 ```
 
 ## Documentation
@@ -709,28 +709,28 @@ The example above will create a sql-statement similar to this:
 
 ```sql
 (
-	SELECT *
-	FROM
-		`cb_people`
-	WHERE
-		`gender` = 'male'
+    SELECT *
+    FROM
+        `cb_people`
+    WHERE
+        `gender` = 'male'
 )
 UNION
 (
-	SELECT *
-	FROM
-		`cb_people`
-	WHERE
-		`email`
-	IS NULL
+    SELECT *
+    FROM
+        `cb_people`
+    WHERE
+        `email`
+    IS NULL
 )
 UNION
 (
-	SELECT *
-	FROM
-		`cb_people`
-	WHERE
-		`hair_color` = 'green'
+    SELECT *
+    FROM
+        `cb_people`
+    WHERE
+        `hair_color` = 'green'
 )
 ```
 
