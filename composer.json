@@ -1,0 +1,24 @@
+{
+    "name": "pollus/pixie",
+    "description": "Simple query-builder for PHP.",
+    "keywords": ["querybuilder", "pixie", "query builder", "sql", "database", "mysql"],
+    "license": "MIT",
+    "minimum-stability": "stable",
+    "authors": 
+    [
+        {
+            "name": "Renan Cavalieri",
+            "email": "renan@tecdicas.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=7.1",
+        "ext-pdo": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Pollus\\Pixie\\": "src/"
+        }
+    }
+}
