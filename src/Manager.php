@@ -2,6 +2,8 @@
 
 namespace Pollus\Pixie;
 
+use Pollus\Pixie\Exceptions\ConnectionException;
+
 /**
  * Connection manager for Pixie
  * 
