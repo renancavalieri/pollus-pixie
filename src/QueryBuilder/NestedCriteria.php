@@ -2,6 +2,8 @@
 
 namespace Pollus\Pixie\QueryBuilder;
 
+use Pollus\Pixie\QueryBuilder\QueryBuilderHandler;
+
 /**
  * Class NestedCriteria
  *
@@ -17,7 +19,7 @@ class NestedCriteria extends QueryBuilderHandler
      *
      * @return static
      */
-    protected function whereHandler($key, string $operator = null, $value = null, $joiner = 'AND'): QueryBuilderInterface
+    protected function whereHandler($key, string $operator = null, $value = null, $joiner = 'AND'): QueryBuilderHandler
     {
         $key = $this->addTablePrefix($key);
         $this->statements['criteria'][] = compact('key', 'operator', 'value', 'joiner');
