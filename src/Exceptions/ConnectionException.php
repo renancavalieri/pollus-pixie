@@ -15,7 +15,7 @@ namespace Pollus\Pixie\Exceptions;
 use Pollus\Pixie\Exception;
 
 /**
- * Class DuplicateColumnException
+ * Class ConnectionException
  *
  * @package Pollus\Pixie\Exceptions
  */
