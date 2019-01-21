@@ -79,7 +79,7 @@ Pollus/Pixie supports only MySQL (for awhile) and will handle all your query san
 The syntax is similar to Laravel's query builder "Eloquent", but with less overhead.
 
 **Requirements:**
-- PHP version 7.1 or higher is required for pollus-pixie version 5.x and above.
+- PHP version 7.2 or higher is required for pollus-pixie version 6.x and above.
 - PDO extension enabled.
 
 **Features:**
