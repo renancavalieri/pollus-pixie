@@ -10,16 +10,17 @@
  *  {@see https://github.com/usmanhalalit/pixie usmanhalalit/pixie}
  */
 
-namespace Pollus\Pixie\Exceptions;
-
-use Pollus\Pixie\Exception;
+namespace Pollus\Pixie\QueryBuilder\Adapters;
 
 /**
- * Class DuplicateColumnException
+ * Class Sqlite
  *
- * @package Pollus\Pixie\Exceptions
+ * @package Pollus\Pixie\QueryBuilder\Adapters
  */
-class ConnectionException extends Exception
+class Sqlite extends BaseAdapter
 {
-
+    /**
+     * @var string
+     */
+    public const SANITIZER = '`';
 }

@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Pixie
+ * @license https://opensource.org/licenses/MIT MIT
+ * @author Renan Cavalieri <renan@tecdicas.com>
+ * 
+ * Forked from:
+ *  {@see https://github.com/skipperbent/pecee-pixie skipperbent/pecee-pixie}
+ *  {@see https://github.com/usmanhalalit/pixie usmanhalalit/pixie}
+ */
+
 namespace Pollus\Pixie\Event;
 
 use Pollus\Pixie\QueryBuilder\QueryBuilderHandler;
@@ -120,7 +130,7 @@ class EventHandler
         $tables = $statements['tables'] ?? [];
 
         // Events added with :any will be fired in case of any table, we are adding :any as a fake table at the beginning.
-        array_unshift($tables, static::TABLE_ANY);
+        array_unshift($tables, self::TABLE_ANY);
 
         // Fire all events
         foreach ($tables as $table) {
@@ -142,7 +152,7 @@ class EventHandler
      */
     public function getEvent(string $event, ?string $table = null): ?callable
     {
-        $table = $table ?? static::TABLE_ANY;
+        $table = $table ?? self::TABLE_ANY;
 
         if ($table instanceof Raw) {
             return null;
@@ -184,7 +194,7 @@ class EventHandler
      */
     public function registerEvent(string $event, ?string $table = null, \Closure $action): void
     {
-        $this->events[$table ?? static::TABLE_ANY][$event] = $action;
+        $this->events[$table ?? self::TABLE_ANY][$event] = $action;
     }
 
     /**
@@ -195,6 +205,6 @@ class EventHandler
      */
     public function removeEvent($event, $table = null): void
     {
-        unset($this->events[$table ?? static::TABLE_ANY][$event]);
+        unset($this->events[$table ?? self::TABLE_ANY][$event]);
     }
 }

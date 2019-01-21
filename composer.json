@@ -8,16 +8,24 @@
     [
         {
             "name": "Renan Cavalieri",
-            "email": "renan@tecdicas.com",
-            "role": "Developer"
+            "email": "renan@tecdicas.com"
         }
     ],
-    "require": {
-        "php": ">=7.1",
+    "require": 
+    {
+        "php": ">=7.2",
         "ext-pdo": "*"
     },
-    "autoload": {
-        "psr-4": {
+    "require-dev": 
+    {
+        "phpunit/phpunit": "^7.0",
+        "mockery/mockery": "^1",
+        "ext-pdo_sqlite": "*"
+    },
+    "autoload": 
+    {
+        "psr-4": 
+        {
             "Pollus\\Pixie\\": "src/"
         }
     }

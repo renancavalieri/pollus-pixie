@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Pixie
+ * @license https://opensource.org/licenses/MIT MIT
+ * @author Renan Cavalieri <renan@tecdicas.com>
+ * 
+ * Forked from:
+ *  {@see https://github.com/skipperbent/pecee-pixie skipperbent/pecee-pixie}
+ *  {@see https://github.com/usmanhalalit/pixie usmanhalalit/pixie}
+ */
+
 namespace Pollus\Pixie\QueryBuilder\Adapters;
 
 use Pollus\Pixie\Connection;
@@ -549,7 +559,6 @@ abstract class BaseAdapter
             $this->arrayStr($statements['selects'], ', '),
             $fromEnabled ? 'FROM' : '',
             $tables,
-            $lock,
             $this->buildQueryPart(static::QUERY_PART_JOIN, $statements),
             $whereCriteria,
             $this->buildQueryPart(static::QUERY_PART_GROUPBY, $statements),
@@ -557,6 +566,7 @@ abstract class BaseAdapter
             $this->buildQueryPart(static::QUERY_PART_ORDERBY, $statements),
             $this->buildQueryPart(static::QUERY_PART_LIMIT, $statements),
             $this->buildQueryPart(static::QUERY_PART_OFFSET, $statements),
+            $lock
         ]);
 
         $sql = $this->buildUnion($statements, $sql);

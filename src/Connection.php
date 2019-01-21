@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Pixie
+ * @license https://opensource.org/licenses/MIT MIT
+ * @author Renan Cavalieri <renan@tecdicas.com>
+ * 
+ * Forked from:
+ *  {@see https://github.com/skipperbent/pecee-pixie skipperbent/pecee-pixie}
+ *  {@see https://github.com/usmanhalalit/pixie usmanhalalit/pixie}
+ */
+
 namespace Pollus\Pixie;
 
 use Pollus\Pixie\ConnectionAdapters\IConnectionAdapter;
@@ -14,9 +24,8 @@ use Pollus\Pixie\QueryBuilder\QueryObject;
  */
 class Connection
 {
-
     /**
-     * Connection adapter (i.e. Mysql)
+     * Connection adapter (i.e. Mysql, Pgsql, Sqlite)
      *
      * @var IConnectionAdapter
      */
@@ -41,21 +50,14 @@ class Connection
      * @var QueryObject|null
      */
     protected $lastQuery;
-    
+
     /**
-     * Initializes a new connection.
-     * 
-     * When none adapter is supplied, the default 'mysql' is used.
-     * 
-     * 
+     * @param string $adapter Adapter name or class
      * @param array $adapterConfig
      */
-    public function __construct(array $adapterConfig)
+    public function __construct($adapter, array $adapterConfig)
     {
-        $adapter = $adapterConfig["adapter"] ?? 'mysql';
-        
-        if (($adapter instanceof IConnectionAdapter) === false) 
-        {
+        if (($adapter instanceof IConnectionAdapter) === false) {
             /* @var $adapter IConnectionAdapter */
             $adapter = '\Pollus\Pixie\ConnectionAdapters\\' . ucfirst(strtolower($adapter));
             $adapter = new $adapter();
@@ -71,10 +73,9 @@ class Connection
 
     /**
      * Create the connection adapter and connect to database
-     * 
-     * @return Connection
+     * @return static
      */
-    public function connect(): Connection
+    public function connect(): self
     {
         if ($this->pdoInstance !== null) {
             return $this;
@@ -115,6 +116,10 @@ class Connection
      */
     public function getPdoInstance(): \PDO
     {
+        if ($this->pdoInstance === null)
+        {
+            $this->connect();
+        }
         return $this->pdoInstance;
     }
 
@@ -128,13 +133,13 @@ class Connection
     {
         return new QueryBuilderHandler($this);
     }
-    
+
     /**
      * @param IConnectionAdapter $adapter
-     * 
-     * @return Connection;
+     *
+     * @return static
      */
-    public function setAdapter(IConnectionAdapter $adapter): Connection
+    public function setAdapter(IConnectionAdapter $adapter): self
     {
         $this->adapter = $adapter;
 
@@ -144,9 +149,9 @@ class Connection
     /**
      * @param array $adapterConfig
      *
-     * @return Connection
+     * @return static
      */
-    public function setAdapterConfig(array $adapterConfig): Connection
+    public function setAdapterConfig(array $adapterConfig): self
     {
         $this->adapterConfig = $adapterConfig;
 
@@ -156,9 +161,9 @@ class Connection
     /**
      * @param \PDO $pdo
      *
-     * @return Connection
+     * @return static
      */
-    public function setPdoInstance(\PDO $pdo): Connection
+    public function setPdoInstance(\PDO $pdo): self
     {
         $this->pdoInstance = $pdo;
 
@@ -169,10 +174,9 @@ class Connection
      * Set query-object for last executed query.
      *
      * @param QueryObject $query
-     * 
-     * @return Connection
+     * @return static
      */
-    public function setLastQuery(QueryObject $query): Connection
+    public function setLastQuery(QueryObject $query): self
     {
         $this->lastQuery = $query;
 
@@ -196,12 +200,11 @@ class Connection
      * @param string|null $table
      * @param \Closure $action
      *
-     * @return Connection
+     * @return void
      */
-    public function registerEvent($name, $table = null, \Closure $action): Connection
+    public function registerEvent($name, $table = null, \Closure $action): void
     {
         $this->getEventHandler()->registerEvent($name, $table, $action);
-        return $this;
     }
 
     /**
@@ -212,67 +215,48 @@ class Connection
         $this->pdoInstance = null;
     }
     
-    
     /**
-     * Start the transaction
+     * Starts a transaction
+     * 
      * @return bool
      */
-    public function beginTransaction()
+    public function beginTransaction() : bool
     {
-        return $this->connect()
-            ->getPdoInstance()
-            ->beginTransaction();
+        return $this->adapter->beginTransaction($this->getPdoInstance());
     }
     
     /**
-     * Rollback the transaction
-     * return @bool
-     */
-    public function rollback()
-    {
-        return $this->connect()
-            ->getPdoInstance()
-            ->rollBack();
-    }
-    
-    /**
-     * Commit the transaction
+     * Commits a transaction
      * 
-     * return @bool
+     * @return bool
      */
-    public function commit()
+    public function commitTransaction() : bool
     {
-        return $this->connect()
-            ->getPdoInstance()
-            ->commit();
+        return $this->adapter->commitTransaction($this->getPdoInstance());
     }
     
     /**
-     * Returns whether is in transaction or not
+     * Rollbacks a transaction
+     * 
+     * @return bool
+     */
+    public function rollbackTransaction() : bool
+    {
+        return $this->adapter->rollbackTransaction($this->getPdoInstance());
+    }
+    
+    /**
+     * Checks if a transaction is currently active
      * 
      * @return bool
      */
     public function inTransaction() : bool
     {
-        return $this->connect()
-                ->getPdoInstance()
-                ->inTransaction();
+        return $this->adapter->inTransaction($this->getPdoInstance());
     }
-    
-    /**
-     * Alias for getQueryBuilder();
-     * 
-     * @return QueryBuilderHandler
-     */
-    public function newQuery() : QueryBuilderHandler
-    {
-        return $this->getQueryBuilder();
-    }
-    
     
     public function __destruct()
     {
         $this->close();
     }
-
 }

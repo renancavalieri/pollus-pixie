@@ -15,11 +15,11 @@ namespace Pollus\Pixie\Exceptions;
 use Pollus\Pixie\Exception;
 
 /**
- * Class DuplicateColumnException
+ * Class FindException
  *
  * @package Pollus\Pixie\Exceptions
  */
-class ConnectionException extends Exception
+class FindException extends Exception
 {
 
 }

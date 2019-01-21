@@ -1,29 +1,24 @@
-
-
-
 # pollus/pixie: Lightweight query builder
 
 This is a **forked version** of pecee/pixie 4.11.0 running on different namespace. All the credits goes to [skipperbent](https://github.com/skipperbent/pecee-pixie) and [usmanhalalit](https://github.com/usmanhalalit/pixie).
 
-**Major changes**
- - Simple Connection Manager (based on Capsule\Manager from Laravel), allowing multiple connections management.
- - Removed IQueryBuilderHandler marker interface to allow IDEs like NetBeans autocomplete the query.
- - Removed static reference to connection on QueryBuilderHandler
- - Added locking rows support for pessimistic strategy (lockForUpdate() and sharedLock())
-- Transaction methods can be accessed on Connection object
- - Dropped SQLite and PostgreSQL (this fork will focus only in MySQL for awhile)
+## Major changes
 
-**Planned features:**
- - Transaction Isolation Level Handling
- - SQL Server support
- - General improvements
- - Bring SQLite and PostgreSQL back, with proper Isolation Levels methods.
+**New in 6.0.0**
+ - Added **findOrFail()** method, which will throw an exception if the query returns NULL.
+ - Added **save()** method, that will perform an UPDATE on a record if the primary key is present, otherwise an INSERT will be performed.
+ - Added locking rows support for pessimistic strategy (lockForUpdate() and sharedLock()) **(MySQL only)**
+ - Dropped support to PostgreSQL
+
+**New in 5.0.0**:
+ - Simple Connection Manager (based on Capsule\Manager from Laravel), allowing multiple connections management.
+ - Removed **IQueryBuilderHandler** marker interface to allow IDEs like NetBeans autocomplete the query.
+ - Removed static reference to connection on QueryBuilderHandler
+ - Transaction methods can be accessed on Connection object
 
 **Why a fork?**
 
 Because I needed these features and had no time to propose it to the originals developers. Also it could break a lot of projects that are currently using pecee/pixie (4.x.x). I can collaborate with the original project and help implement these new features (if the author wants) on a next major release.
-
-**I do not intend to keep this library for so long, since all of these features could be implemented on pecee/pixie in near future**
 
 ## New features example
 
@@ -33,6 +28,7 @@ $databases = array
 (
     'default' =>
     [
+        'adapter'   => 'mysql' // when NULL, driver name will be used as adapter
         'driver'    => 'mysql',
         'host'      => '127.0.0.1',
         'database'  => 'my_table',

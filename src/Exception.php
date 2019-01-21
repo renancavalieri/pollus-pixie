@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Pixie
+ * @license https://opensource.org/licenses/MIT MIT
+ * @author Renan Cavalieri <renan@tecdicas.com>
+ * 
+ * Forked from:
+ *  {@see https://github.com/skipperbent/pecee-pixie skipperbent/pecee-pixie}
+ *  {@see https://github.com/usmanhalalit/pixie usmanhalalit/pixie}
+ */
+
 namespace Pollus\Pixie;
 
 use Pollus\Pixie\Exceptions\ColumnNotFoundException;
@@ -11,7 +21,6 @@ use Pollus\Pixie\Exceptions\ForeignKeyException;
 use Pollus\Pixie\Exceptions\NotNullException;
 use Pollus\Pixie\Exceptions\TableNotFoundException;
 use Pollus\Pixie\QueryBuilder\Adapters\Mysql;
-use Pollus\Pixie\QueryBuilder\Adapters\Pgsql;
 use Pollus\Pixie\QueryBuilder\Adapters\Sqlite;
 use Pollus\Pixie\QueryBuilder\QueryObject;
 use Throwable;
@@ -82,20 +91,6 @@ class Exception extends \Exception
                             return new DuplicateColumnException($errorMsg, $errorCode, $e->getPrevious(), $query);
                         case 1061: // Message: Duplicate key name '%s'
                             return new DuplicateKeyException($errorMsg, $errorCode, $e->getPrevious(), $query);
-                    }
-                    break;
-                case Pgsql::class:
-                    // https://www.postgresql.org/docs/9.4/static/errcodes-appendix.html
-                    switch ($errorCode) {
-                        case 42701: // exclusion_violation
-                            return new DuplicateColumnException($e->getMessage(), $errorCode, $e->getPrevious(), $query);
-                        case 23000: // foreign_key_violation
-                        case 23503: // integrity_constraint_violation
-                            return new ForeignKeyException($e->getMessage(), $errorCode, $e->getPrevious(), $query);
-                        case 23505: // unique_violation
-                            return new DuplicateEntryException($e->getMessage(), $errorCode, $e->getPrevious(), $query);
-                        case 23502: // not_null_violation
-                            return new NotNullException($e->getMessage(), $errorCode, $e->getPrevious(), $query);
                     }
                     break;
                 case Sqlite::class:

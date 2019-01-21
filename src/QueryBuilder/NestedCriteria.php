@@ -1,8 +1,16 @@
 <?php
 
-namespace Pollus\Pixie\QueryBuilder;
+/**
+ * Pixie
+ * @license https://opensource.org/licenses/MIT MIT
+ * @author Renan Cavalieri <renan@tecdicas.com>
+ * 
+ * Forked from:
+ *  {@see https://github.com/skipperbent/pecee-pixie skipperbent/pecee-pixie}
+ *  {@see https://github.com/usmanhalalit/pixie usmanhalalit/pixie}
+ */
 
-use Pollus\Pixie\QueryBuilder\QueryBuilderHandler;
+namespace Pollus\Pixie\QueryBuilder;
 
 /**
  * Class NestedCriteria
@@ -19,7 +27,7 @@ class NestedCriteria extends QueryBuilderHandler
      *
      * @return static
      */
-    protected function whereHandler($key, string $operator = null, $value = null, $joiner = 'AND'): QueryBuilderHandler
+    protected function whereHandler($key, ?string $operator = null, $value = null, $joiner = 'AND'): QueryBuilderHandler
     {
         $key = $this->addTablePrefix($key);
         $this->statements['criteria'][] = compact('key', 'operator', 'value', 'joiner');

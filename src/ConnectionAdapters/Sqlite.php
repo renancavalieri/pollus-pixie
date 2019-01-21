@@ -16,11 +16,11 @@ use PDO;
 use Pollus\Pixie\Exception;
 
 /**
- * Class Mysql
+ * Class Sqlite
  *
  * @package Pollus\Pixie\ConnectionAdapters
  */
-class Mysql extends BaseAdapter
+class Sqlite extends BaseAdapter
 {
     /**
      * @param array $config
@@ -36,39 +36,19 @@ class Mysql extends BaseAdapter
      * @throws \Pollus\Pixie\Exceptions\ForeignKeyException
      * @throws \Pollus\Pixie\Exceptions\NotNullException
      */
-    protected function doConnect(array $config): PDO
+    public function doConnect(array $config): PDO
     {
-        if (\extension_loaded('pdo_mysql') === false) {
-            throw new Exception(sprintf('%s library not loaded', 'pdo_mysql'));
+        if (\extension_loaded('pdo_sqlite') === false) {
+            throw new Exception(sprintf('%s library not loaded', 'pdo_sqlite'));
         }
 
-        $connectionString = "mysql:dbname={$config['database']}";
-
-        if (isset($config['host']) === true) {
-            $connectionString .= ";host={$config['host']}";
-        }
-
-        if (isset($config['port']) === true) {
-            $connectionString .= ";port={$config['port']}";
-        }
-
-        if (isset($config['unix_socket']) === true) {
-            $connectionString .= ";unix_socket={$config['unix_socket']}";
-        }
+        $connectionString = 'sqlite:' . $config['database'];
 
         try {
-
-            $connection = new PDO($connectionString, $config['username'], $config['password'], $config['options']);
-
-            if (isset($config['charset']) === true) {
-                $connection->prepare("SET NAMES '{$config['charset']}'")->execute();
-            }
-
+            return new PDO($connectionString, null, null, $config['options']);
         } catch (\PDOException $e) {
             throw Exception::create($e, $this->getQueryAdapterClass());
         }
-
-        return $connection;
     }
 
     /**
@@ -77,6 +57,6 @@ class Mysql extends BaseAdapter
      */
     public function getQueryAdapterClass(): string
     {
-        return \Pollus\Pixie\QueryBuilder\Adapters\Mysql::class;
+        return \Pollus\Pixie\QueryBuilder\Adapters\Sqlite::class;
     }
 }

@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Pixie
+ * @license https://opensource.org/licenses/MIT MIT
+ * @author Renan Cavalieri <renan@tecdicas.com>
+ * 
+ * Forked from:
+ *  {@see https://github.com/skipperbent/pecee-pixie skipperbent/pecee-pixie}
+ *  {@see https://github.com/usmanhalalit/pixie usmanhalalit/pixie}
+ */
+
 namespace Pollus\Pixie\QueryBuilder;
 
 use PDO;
@@ -7,8 +17,9 @@ use Pollus\Pixie\Connection;
 use Pollus\Pixie\Event\EventHandler;
 use Pollus\Pixie\Exception;
 use Pollus\Pixie\Exceptions\ColumnNotFoundException;
-use Pollus\Pixie\Exceptions\ConnectionException;
 use Pollus\Pixie\Exceptions\TransactionHaltException;
+use Pollus\Pixie\Exceptions\FindException;
+use Pollus\Pixie\QueryBuilder\Adapters\Mysql;
 
 /**
  * Class QueryBuilderHandler
@@ -80,25 +91,24 @@ class QueryBuilderHandler
     protected $overwriteEnabled = false;
 
     /**
-     * @param \Pollus\Pixie\Connection|null $connection
+     * @param \Pollus\Pixie\Connection $connection
      *
      * @throws \Pollus\Pixie\Exception
      */
     public function __construct(Connection $connection)
     {
         $this->connection = $connection;
-
-        // Connect to database
         $this->connection->connect();
-
         $adapterConfig = $this->connection->getAdapterConfig();
 
         if (isset($adapterConfig['prefix']) === true) {
             $this->tablePrefix = $adapterConfig['prefix'];
         }
 
-        if (isset($adapterConfig['query_overwriting']) === true) {
+        if (isset($adapterConfig['query_overwriting']) === true) 
+        {
             $this->overwriteEnabled = (bool)$adapterConfig['query_overwriting'];
+            unset($this->statements['lock']);
         }
 
         // Query builder adapter instance
@@ -114,7 +124,7 @@ class QueryBuilderHandler
      * @param string $className
      * @param array $constructorArgs
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
     public function asObject(string $className, array $constructorArgs = []): QueryBuilderHandler
     {
@@ -126,9 +136,9 @@ class QueryBuilderHandler
      *
      * @param mixed $parameters ...
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function setFetchMode($parameters = null): QueryBuilderHandler
+    public function setFetchMode($parameters = null): self
     {
         $this->fetchParameters = \func_get_args();
 
@@ -303,9 +313,9 @@ class QueryBuilderHandler
      *
      * @param Connection $connection
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function setConnection(Connection $connection): QueryBuilderHandler
+    public function setConnection(Connection $connection): self
     {
         $this->connection = $connection;
 
@@ -419,9 +429,9 @@ class QueryBuilderHandler
      *
      * @param int $limit
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function limit(int $limit): QueryBuilderHandler
+    public function limit(int $limit): self
     {
         $this->statements['limit'] = $limit;
 
@@ -437,9 +447,9 @@ class QueryBuilderHandler
      *
      * @param string|array $fields,...
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function select($fields): QueryBuilderHandler
+    public function select($fields = "*"): self
     {
         if (\is_array($fields) === false) {
             $fields = \func_get_args();
@@ -447,43 +457,12 @@ class QueryBuilderHandler
 
         $fields = $this->addTablePrefix($fields);
 
-        if ($this->overwriteEnabled === true) 
-        {
+        if ($this->overwriteEnabled === true) {
             $this->statements['selects'] = $fields;
-            unset($this->statements['lock']);
-        }
-        else 
-        {
+        } else {
             $this->addStatement('selects', $fields);
         }
 
-        return $this;
-    }
-    
-    /**
-     * Add a exclusive read lock on readed rows. 
-     * 
-     * This lock will be released when you commit or rollback the transaction.
-     * 
-     * @return QueryBuilderHandler
-     */
-    public function lockForUpdate() : QueryBuilderHandler
-    {
-        $this->statements["lock"] = "FOR UPDATE";
-        return $this;
-    }
-    
-    
-    /**
-     * Add a shared read lock on readed rows.
-     * 
-     * This lock will be released when you commit or rollback the transaction.
-     * 
-     * @return QueryBuilderHandler
-     */
-    public function sharedLock() : QueryBuilderHandler
-    {
-        $this->statements["lock"] = "LOCK IN SHARE MODE";
         return $this;
     }
 
@@ -562,7 +541,7 @@ class QueryBuilderHandler
      *
      * @param string|array|null $tables Single table or multiple tables as an array or as multiple parameters
      *
-     * @return QueryBuilderHandler
+     * @return static
      * @throws Exception
      *
      * ```
@@ -576,7 +555,7 @@ class QueryBuilderHandler
      * ->table($qb->raw('table_one as one'))
      * ```
      */
-    public function table($tables = null): QueryBuilderHandler
+    public function table($tables = null): self
     {
         if ($tables === null) {
             return $this->from($tables);
@@ -595,9 +574,9 @@ class QueryBuilderHandler
      *
      * @param string|array|null $tables Single table or multiple tables as an array or as multiple parameters
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function from($tables = null): QueryBuilderHandler
+    public function from($tables = null): self
     {
         if ($tables === null) {
             $this->statements['tables'] = null;
@@ -634,9 +613,9 @@ class QueryBuilderHandler
      * @param string $alias
      * @param string $table
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function alias(string $alias, ?string $table = null): QueryBuilderHandler
+    public function alias(string $alias, ?string $table = null): self
     {
         if ($table === null && isset($this->statements['tables'][0]) === true) {
             $table = $this->statements['tables'][0];
@@ -653,9 +632,9 @@ class QueryBuilderHandler
      * Creates and returns new query.
      *
      * @throws Exception
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function newQuery(): QueryBuilderHandler
+    public function newQuery(): self
     {
         return new static($this->connection);
     }
@@ -791,6 +770,28 @@ class QueryBuilderHandler
     {
         return $this->where($fieldName, '=', $value)->first();
     }
+    
+    
+    /**
+     * Find by value and field name or thrown an exception if not found
+     *
+     * @param string|int|float $value
+     * @param string $fieldName
+     *
+     * @throws FindException
+     * @return \stdClass|string|null
+     */
+    public function findOrFail($value, string $fieldName = 'id')
+    {
+        $result = $this->where($fieldName, '=', $value)->first();
+        
+        if ($result === null)
+        {
+            throw new FindException();
+        }
+        
+        return $result;
+    }
 
     /**
      * Adds WHERE statement to the current query.
@@ -799,9 +800,9 @@ class QueryBuilderHandler
      * @param string|null $operator
      * @param mixed|Raw|\Closure|null $value
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function where($key, $operator = null, $value = null): QueryBuilderHandler
+    public function where($key, $operator = null, $value = null): self
     {
         // If two params are given then assume operator is =
         if (\func_num_args() === 2) {
@@ -824,9 +825,9 @@ class QueryBuilderHandler
      * @param string|Raw|\Closure|null $value
      * @param string $joiner
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    protected function whereHandler($key, ?string $operator = null, $value = null, $joiner = 'AND'): QueryBuilderHandler
+    protected function whereHandler($key, ?string $operator = null, $value = null, $joiner = 'AND'): self
     {
         $key = $this->addTablePrefix($key);
         $this->statements['wheres'][] = compact('key', 'operator', 'value', 'joiner');
@@ -866,9 +867,9 @@ class QueryBuilderHandler
      *
      * @param string|Raw|\Closure|array $field
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function groupBy($field): QueryBuilderHandler
+    public function groupBy($field): self
     {
         if (($field instanceof Raw) === false) {
             $field = $this->addTablePrefix($field);
@@ -891,10 +892,10 @@ class QueryBuilderHandler
      * @param string|mixed|null $operator
      * @param string|Raw|\Closure|null $value
      *
-     * @return QueryBuilderHandler
+     * @return static
      * @throws Exception
      */
-    public function innerJoin($table, $key, $operator = null, $value = null): QueryBuilderHandler
+    public function innerJoin($table, $key, $operator = null, $value = null): self
     {
         return $this->join($table, $key, $operator, $value, 'inner');
     }
@@ -908,7 +909,7 @@ class QueryBuilderHandler
      * @param string|Raw|\Closure $value
      * @param string $type
      *
-     * @return QueryBuilderHandler
+     * @return static
      * @throws Exception
      *
      * ```
@@ -928,7 +929,7 @@ class QueryBuilderHandler
      * })
      * ```
      */
-    public function join($table, $key = null, $operator = null, $value = null, $type = ''): QueryBuilderHandler
+    public function join($table, $key = null, $operator = null, $value = null, $type = ''): self
     {
         $joinBuilder = null;
 
@@ -1084,7 +1085,7 @@ class QueryBuilderHandler
      * @param string|Raw|\Closure $table
      * @param string|array $fields
      * @param string $joinType
-     * @return QueryBuilderHandler
+     * @return static
      * @throws Exception
      */
     public function joinUsing($table, $fields, $joinType = '')
@@ -1115,10 +1116,10 @@ class QueryBuilderHandler
      * @param string|null $operator
      * @param string|Raw|\Closure|null $value
      *
-     * @return QueryBuilderHandler
+     * @return static
      * @throws Exception
      */
-    public function leftJoin($table, $key, $operator = null, $value = null): QueryBuilderHandler
+    public function leftJoin($table, $key, $operator = null, $value = null): self
     {
         return $this->join($table, $key, $operator, $value, 'left');
     }
@@ -1128,9 +1129,9 @@ class QueryBuilderHandler
      *
      * @param int $offset
      *
-     * @return QueryBuilderHandler $this
+     * @return static $this
      */
-    public function offset(int $offset): QueryBuilderHandler
+    public function offset(int $offset): self
     {
         $this->statements['offset'] = $offset;
 
@@ -1142,9 +1143,9 @@ class QueryBuilderHandler
      *
      * @param array $data
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function onDuplicateKeyUpdate(array $data): QueryBuilderHandler
+    public function onDuplicateKeyUpdate(array $data): self
     {
         $this->addStatement('onduplicate', $data);
 
@@ -1158,9 +1159,9 @@ class QueryBuilderHandler
      * @param string|Raw|\Closure $operator
      * @param mixed|Raw|\Closure|null $value
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function orHaving($key, $operator, $value): QueryBuilderHandler
+    public function orHaving($key, $operator, $value): self
     {
         return $this->having($key, $operator, $value, 'OR');
     }
@@ -1173,9 +1174,9 @@ class QueryBuilderHandler
      * @param string|mixed $value
      * @param string $joiner
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function having($key, $operator, $value, $joiner = 'AND'): QueryBuilderHandler
+    public function having($key, $operator, $value, $joiner = 'AND'): self
     {
         $key = $this->addTablePrefix($key);
         $this->statements['havings'][] = compact('key', 'operator', 'value', 'joiner');
@@ -1190,9 +1191,9 @@ class QueryBuilderHandler
      * @param string|null $operator
      * @param mixed|Raw|\Closure|null $value
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function orWhere($key, $operator = null, $value = null): QueryBuilderHandler
+    public function orWhere($key, $operator = null, $value = null): self
     {
         // If two params are given then assume operator is =
         if (\func_num_args() === 2) {
@@ -1210,9 +1211,9 @@ class QueryBuilderHandler
      * @param string|integer|float $valueFrom
      * @param string|integer|float $valueTo
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function orWhereBetween($key, $valueFrom, $valueTo): QueryBuilderHandler
+    public function orWhereBetween($key, $valueFrom, $valueTo): self
     {
         return $this->whereHandler($key, 'BETWEEN', [$valueFrom, $valueTo], 'OR');
     }
@@ -1223,9 +1224,9 @@ class QueryBuilderHandler
      * @param string|Raw|\Closure $key
      * @param array|Raw|\Closure $values
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function orWhereIn($key, $values): QueryBuilderHandler
+    public function orWhereIn($key, $values): self
     {
         return $this->whereHandler($key, 'IN', $values, 'OR');
     }
@@ -1237,9 +1238,9 @@ class QueryBuilderHandler
      * @param string|null $operator
      * @param mixed|Raw|\Closure|null $value
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function orWhereNot($key, $operator = null, $value = null): QueryBuilderHandler
+    public function orWhereNot($key, $operator = null, $value = null): self
     {
         // If two params are given then assume operator is =
         if (\func_num_args() === 2) {
@@ -1256,9 +1257,9 @@ class QueryBuilderHandler
      * @param string|Raw|\Closure $key
      * @param array|Raw|\Closure $values
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function orWhereNotIn($key, $values): QueryBuilderHandler
+    public function orWhereNotIn($key, $values): self
     {
         return $this->whereHandler($key, 'NOT IN', $values, 'OR');
     }
@@ -1268,9 +1269,9 @@ class QueryBuilderHandler
      *
      * @param string|Raw|\Closure $key
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function orWhereNotNull($key): QueryBuilderHandler
+    public function orWhereNotNull($key): self
     {
         return $this->whereNullHandler($key, 'NOT', 'or');
     }
@@ -1282,9 +1283,9 @@ class QueryBuilderHandler
      * @param string $prefix
      * @param string $operator
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    protected function whereNullHandler($key, string $prefix = '', string $operator = ''): QueryBuilderHandler
+    protected function whereNullHandler($key, string $prefix = '', string $operator = ''): self
     {
         $key = $this->adapterInstance->wrapSanitizer($this->addTablePrefix($key));
         $prefix = ($prefix !== '') ? $prefix . ' ' : $prefix;
@@ -1297,9 +1298,9 @@ class QueryBuilderHandler
      *
      * @param string|Raw|\Closure $key
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function orWhereNull($key): QueryBuilderHandler
+    public function orWhereNull($key): self
     {
         return $this->whereNullHandler($key, '', 'or');
     }
@@ -1310,9 +1311,9 @@ class QueryBuilderHandler
      * @param string|Raw|\Closure|array $fields
      * @param string $direction
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function orderBy($fields, string $direction = 'ASC'): QueryBuilderHandler
+    public function orderBy($fields, string $direction = 'ASC'): self
     {
         if (\is_array($fields) === false) {
             $fields = [$fields];
@@ -1343,10 +1344,10 @@ class QueryBuilderHandler
      * @param string $sql
      * @param array $bindings
      *
-     * @return QueryBuilderHandler
+     * @return static
      * @throws Exception
      */
-    public function query(string $sql, array $bindings = []): QueryBuilderHandler
+    public function query(string $sql, array $bindings = []): self
     {
         $queryObject = new QueryObject($sql, $bindings, $this->getConnection());
         $this->connection->setLastQuery($queryObject);
@@ -1412,10 +1413,10 @@ class QueryBuilderHandler
      * @param string|null $operator
      * @param string|Raw|\Closure|null $value
      *
-     * @return QueryBuilderHandler
+     * @return static
      * @throws Exception
      */
-    public function rightJoin($table, $key, ?string $operator = null, $value = null): QueryBuilderHandler
+    public function rightJoin($table, $key, ?string $operator = null, $value = null): self
     {
         return $this->join($table, $key, $operator, $value, 'right');
     }
@@ -1425,7 +1426,7 @@ class QueryBuilderHandler
      *
      * @param string|Raw|\Closure|array $fields
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
     public function selectDistinct($fields)
     {
@@ -1444,9 +1445,9 @@ class QueryBuilderHandler
      * @param QueryBuilderHandler $query
      * @param string|null $unionType
      *
-     * @return QueryBuilderHandler $this
+     * @return static $this
      */
-    public function union(QueryBuilderHandler $query, ?string $unionType = self::UNION_TYPE_NONE): QueryBuilderHandler
+    public function union(QueryBuilderHandler $query, ?string $unionType = self::UNION_TYPE_NONE): self
     {
         $statements = $query->getStatements();
 
@@ -1477,7 +1478,7 @@ class QueryBuilderHandler
     /**
      * @param array $statements
      *
-     * @return QueryBuilderHandler $this
+     * @return static $this
      */
     public function setStatements(array $statements)
     {
@@ -1551,9 +1552,9 @@ class QueryBuilderHandler
      * @param string|integer|float|Raw|\Closure $valueFrom
      * @param string|integer|float|Raw|\Closure $valueTo
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function whereBetween($key, $valueFrom, $valueTo): QueryBuilderHandler
+    public function whereBetween($key, $valueFrom, $valueTo): self
     {
         return $this->whereHandler($key, 'BETWEEN', [$valueFrom, $valueTo]);
     }
@@ -1564,9 +1565,9 @@ class QueryBuilderHandler
      * @param string|Raw|\Closure $key
      * @param array|Raw|\Closure $values
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function whereIn($key, $values): QueryBuilderHandler
+    public function whereIn($key, $values): self
     {
         return $this->whereHandler($key, 'IN', $values);
     }
@@ -1578,9 +1579,9 @@ class QueryBuilderHandler
      * @param string|array|Raw|\Closure|null $operator
      * @param mixed|Raw|\Closure|null $value
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function whereNot($key, $operator = null, $value = null): QueryBuilderHandler
+    public function whereNot($key, $operator = null, $value = null): self
     {
         // If two params are given then assume operator is =
         if (\func_num_args() === 2) {
@@ -1597,9 +1598,9 @@ class QueryBuilderHandler
      * @param string|Raw|\Closure $key
      * @param array|Raw|\Closure $values
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function whereNotIn($key, $values): QueryBuilderHandler
+    public function whereNotIn($key, $values): self
     {
         return $this->whereHandler($key, 'NOT IN', $values);
     }
@@ -1609,9 +1610,9 @@ class QueryBuilderHandler
      *
      * @param string|Raw|\Closure $key
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function whereNotNull($key): QueryBuilderHandler
+    public function whereNotNull($key): self
     {
         return $this->whereNullHandler($key, 'NOT');
     }
@@ -1621,9 +1622,9 @@ class QueryBuilderHandler
      *
      * @param string|Raw|\Closure $key
      *
-     * @return QueryBuilderHandler
+     * @return static
      */
-    public function whereNull($key): QueryBuilderHandler
+    public function whereNull($key): self
     {
         return $this->whereNullHandler($key);
     }
@@ -1653,7 +1654,7 @@ class QueryBuilderHandler
     }
 
     /**
-     * Returns boolean value indicating if overwriting is enabled or disabled in IQueryBuilderHandler.
+     * Returns boolean value indicating if overwriting is enabled or disabled in QueryBuilderHandler.
      *
      * @return bool
      */
@@ -1666,7 +1667,7 @@ class QueryBuilderHandler
      * If enabled calling from, select etc. will overwrite any existing values from previous calls in query.
      *
      * @param bool $enabled
-     * @return QueryBuilderHandler
+     * @return static
      */
     public function setOverwriteEnabled(bool $enabled)
     {
@@ -1688,5 +1689,62 @@ class QueryBuilderHandler
         $this->pdoStatement = null;
         $this->connection = null;
     }
+    
+     /**
+     * Adds an exclusive lock on readed rows. 
+     * 
+     * This lock will be released when you commit or rollback the transaction.
+     * 
+     * WARNING: This method will only have effect in MySQL!
+     * 
+     * @return static
+     */
+    public function lockForUpdate() : self
+    {
+        if ($this->adapterInstance instanceof Mysql)
+        {
+            $this->statements["lock"] = "FOR UPDATE";
+        }
+        return $this;
+    }
+    
+    
+    /**
+     * Adds a shared read lock on readed rows.
+     * 
+     * This lock will be released when you commit or rollback the transaction.
+     * 
+     * WARNING: This method will only have effect in MySQL!
+     * 
+     * @return static
+     */
+    public function sharedLock() : self
+    {
+        if ($this->adapterInstance instanceof Mysql)
+        {
+            $this->statements["lock"] = "LOCK IN SHARE MODE";
+        }
+        return $this;
+    }
+    
+    
+    /**
+     * Insert or update a record and return its ID
+     * 
+     * @param array $data
+     * @param string $pk
+     * 
+     * @return mixed
+     */
+    public function save(array $data, string $pk = "id")
+    {
+        if (isset($data[$pk]) && $data[$pk] !== null && $data[$pk] !== "")
+        {
+            $this->where($pk, '=', $data[$pk])->update($data);
+            return $data[$pk];
+        }
+        return $this->doInsert($data, 'insert');
+    }
+    
 
 }
