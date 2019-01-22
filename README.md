@@ -6,7 +6,7 @@ This is a **forked version** of pecee/pixie 4.11.0 running on different namespac
 
 **New in 6.0.0**
  - Added **findOrFail()** method, which will throw an exception if the query returns NULL.
- - Added **save()** method, that will perform an UPDATE on a record if the primary key is present, otherwise an INSERT will be performed.
+ - Added **save()** method, that will execute an UPDATE on a record if the primary key is present, otherwise an INSERT will be performed.
  - Added locking rows support for pessimistic strategy (lockForUpdate() and sharedLock()) **(MySQL only)**
  - Dropped support to PostgreSQL
 
@@ -18,7 +18,7 @@ This is a **forked version** of pecee/pixie 4.11.0 running on different namespac
 
 **Why a fork?**
 
-Because I needed these features and had no time to propose it to the originals developers. Also it could break a lot of projects that are currently using pecee/pixie (4.x.x). I can collaborate with the original project and help implement these new features (if the author wants) on a next major release.
+Because I needed these features and had no time to propose it to the originals developers. I can collaborate with the original project and help implement these new features (**if the author wants**).
 
 ## New features example
 
@@ -38,6 +38,14 @@ $databases = array
         //'collation' => 'utf8_unicode_ci',     // optional
         //'prefix'    => '',                    // optional
     ],
+
+    'session_mock' => 
+    [
+        'driver'   => 'sqlite',
+        'database' => ':memory:',
+        //'database' => __DIR__.'/db_sqlite.sqlite',
+        'prefix'   => '',
+    ],
     
     'sessions' =>
     [
@@ -52,6 +60,7 @@ $databases = array
     ],
 );
 
+
 $db = new \Pollus\Pixie\Manager();
 
 foreach ($databases as $name => $db_conf) 
@@ -59,11 +68,11 @@ foreach ($databases as $name => $db_conf)
     $db->addConnection($db_conf, $name);
 }
 
-// but only sessions connection was instanced, because the method getConnection was invoked.
+// but only "sessions" connection was instanced, because the method getConnection was invoked.
 $con = $db->getConnection('sessions');
 
 // [...] later in the code, using pessimistic locking inside a transaction
-$con->newQuery()
+$con->getQueryBuilder()
     ->table('user_sessions')
     ->select('*')
     ->lockForUpdate()
@@ -74,7 +83,7 @@ $con->newQuery()
 
 A lightweight, expressive, framework agnostic query builder for PHP it can also be referred as a Database Abstraction Layer.
 
-Pollus/Pixie supports only MySQL (for awhile) and will handle all your query sanitization, table alias, unions among many other things, with a unified API.
+Pollus/Pixie supports MySQL and SQLite and will handle all your query sanitization, table alias, unions among many other things, with a unified API.
 
 The syntax is similar to Laravel's query builder "Eloquent", but with less overhead.
 
@@ -93,10 +102,6 @@ The syntax is similar to Laravel's query builder "Eloquent", but with less overh
 - Better connection handling.
 - Performance optimisations.
 - Tons of bug fixes.
-- Much more...
-
-**Including all the original features like:**
-
 - Query events
 - Nested criteria
 - Sub queries
@@ -134,7 +139,7 @@ $config =
     ],
 ];
 
-$queryBuilder = (new \Pollus\Pixie\Connection($config))->getQueryBuilder();
+$queryBuilder = (new \Pollus\Pixie\Connection('mysql', $config))->getQueryBuilder();
 ```
 
 **Simple query:**
@@ -323,6 +328,14 @@ The query below returns the (first) row where id = 3, null if no rows.
 $row = $queryBuilder
             ->table('my_table')
             ->find(3);
+```
+
+You also can use the method `findOrFail`, which performs a `find`, however it will throw an FindException if no results were found.
+
+```php
+$row = $queryBuilder
+            ->table('my_table')
+            ->findOrFail(3);
 ```
 
 Access your row like, `echo $row->name`. If your field name is not `id` then pass the field name as second parameter `$queryBuilder->table('my_table')->find(3, 'person_id');`.
@@ -1254,7 +1267,7 @@ Licensed under the MIT licence.
 
 ### The MIT License (MIT)
 
-Copyright (c) 2018 Renan Cavalieri
+Copyright (c) 2019 Renan Cavalieri
 
 Original credits:
 
