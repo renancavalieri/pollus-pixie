@@ -272,11 +272,8 @@ $person = $queryBuilder
             ->first();
 ```
 
-`$connection` here is optional, if not given it will always associate itself to the first connection, but it can be useful when you have multiple database connections.
-
 **NOTE:**
 Calling the `getQueryBuilder` method will automatically make a connection to the database, if none has already established.
-If you want to access the `Pdo` instance directly from the `Connection` class, make sure to call `$connection->connect();` to establish a connection to the database.
 
 ## Select
 
