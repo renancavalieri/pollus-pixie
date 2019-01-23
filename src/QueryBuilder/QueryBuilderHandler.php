@@ -816,7 +816,63 @@ class QueryBuilderHandler
 
         return $this->whereHandler($key, $operator, $value);
     }
-
+    
+    /**
+     * Adds WHERE statement to the current query only if the suplied argument
+     * is not null
+     *
+     * @param string|Raw|\Closure $key
+     * @param string|null $operator
+     * @param mixed|Raw|\Closure|null $value
+     *
+     * @return static
+     */
+    public function filter($key, $operator = null, $value = null): self
+    {
+        // If two params are given then assume operator is =
+        if (\func_num_args() === 2 && $operator !== null) 
+        {
+            $this->where($key, $operator);
+        }
+        else if (\func_num_args() === 3 && $value !== null)
+        {
+            return $this->where($key, $operator, $value);
+        }
+        else if (is_callable($key) || $key instanceof Raw)
+        {
+            return $this->where($key, $operator, $value);
+        }
+        return $this;
+    }
+    
+     /**
+     * Adds OR WHERE statement to the current query only if the suplied argument
+      * is not null
+     *
+     * @param string|Raw|\Closure $key
+     * @param string|null $operator
+     * @param mixed|Raw|\Closure|null $value
+     *
+     * @return static
+     */
+    public function orFilter($key, $operator = null, $value = null): self
+    {
+        // If two params are given then assume operator is =
+        if (\func_num_args() === 2 && $operator !== null) 
+        {
+            $this->orWhere($key, $operator);
+        }
+        else if (\func_num_args() === 3 && $value !== null)
+        {
+            return $this->orWhere($key, $operator, $value);
+        }
+        else if (is_callable($key) || $key instanceof Raw)
+        {
+            return $this->orWhere($key, $operator, $value);
+        }
+        return $this;
+    }
+    
     /**
      * Handles where statements
      *

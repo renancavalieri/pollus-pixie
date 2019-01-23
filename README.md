@@ -169,9 +169,6 @@ ___
 ## Table of Contents
 
  - [Installation](#installation)
- - [Feedback and development](#feedback-and-development)
-    - [Issues guidelines](#issues-guidelines)
-    - [Contribution and development guidelines](#contribution-and-development-guidelines)
  - [Connecting to the database](#connecting-to-the-database)
  - [**Select**](#select)
     - [Table alias](#table-alias)
@@ -195,6 +192,7 @@ ___
     - [Where between](#where-between)
     - [Where null](#where-null)
     - [Grouped where](#grouped-where)
+    - [Where (filter)](#filter)
  - [Group- and order by](#group--and-order-by)
  - [Having](#having)
  - [Limit and offset](#limit-and-offset)
@@ -594,6 +592,31 @@ $queryBuilder
         // You can provide a closure on these wheres too, to nest further.
         $qb->orWhere('description', 'LIKE', '%usman%');
     });
+```
+
+### Where - Filter
+
+`filter` and `orFilter` performs in the same way that `where` and `orWhere` does, however it only takes effect if the supplied argument is not NULL.
+
+```php
+$name = null;
+$age = 12;
+
+$queryBuilder
+    ->table("people")
+    ->filter('name', '=', $name) // this will be ignored
+    ->filter('age', '=', $age)
+    ->get();
+```
+
+Is possible to use multiple OR conditions like `orWhere`
+
+```php
+$queryBuilder
+    ->table("people")
+    ->orFilter('name', 'Cavalieri')
+    ->orFilter('age', null)
+    ->get();
 ```
 
 ### Group- and order by

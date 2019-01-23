@@ -201,5 +201,102 @@ class QueryBuilder extends TestCase
         $eye = $builder->table("tbl_eyes")->where('color', '=', "yellow")->first();
         $this->assertSame("yellow", $eye->color);
     }
+    
+    public function testFilter()
+    {
+        $builder = $this->getLiveConnection();
+        
+        $people = $builder->table("people")
+                ->filter('name', '=', null)
+                ->get();
+        
+        $this->assertSame(3, count($people));
+        
+        $people = $builder->table("people")
+                ->filter('name', null)
+                ->get();
+        
+        $this->assertSame(3, count($people));
+        
+        
+        $people = $builder->table("people")
+                ->filter('name', 'Simon')
+                ->get();
+        
+        $this->assertSame(1, count($people));
+        $this->assertSame('Simon', $people[0]->name);
+        
+        $people = $builder->table("people")
+                ->filter('name', '=', 'Simon')
+                ->get();
+        
+        $this->assertSame(1, count($people));
+        $this->assertSame('Simon', $people[0]->name);
+    }
+    
+    public function testMultipleFilter()
+    {
+        $builder = $this->getLiveConnection();
+        
+        $people = $builder->table("people")
+                ->filter('name', 'Simon')
+                ->filter('age', null)
+                ->get();
+        
+        $this->assertSame(1, count($people));
+        $this->assertSame('Simon', $people[0]->name);
+        
+         $people = $builder->table("people")
+                ->filter('name', 'Simon')
+                ->filter('age', 40)
+                ->get();
+        
+        $this->assertSame(0, count($people));
+        
+        $people = $builder->table("people")
+                ->filter('name', '=', 'Simon')
+                ->filter('age', '=', 12)
+                ->get();
+        
+        $this->assertSame(1, count($people));
+        $this->assertSame('Simon', $people[0]->name);
+    }
+    
+    public function testMultipleOrFilter()
+    {
+        $builder = $this->getLiveConnection();
+        
+        $people = $builder->table("people")
+                ->orFilter('name', 'Simon')
+                ->orFilter('age', null)
+                ->get();
+        
+        $this->assertSame(1, count($people));
+        $this->assertSame('Simon', $people[0]->name);
+        
+         $people = $builder->table("people")
+                ->orFilter('name', 'Simon')
+                ->orFilter('age', 40)
+                ->get();
+        
+        $this->assertSame(2, count($people));
+    }
+    
+    public function testGroupedFilter()
+    {
+        $builder = $this->getLiveConnection();
+        
+        $people = $builder->table("people")
+                ->filter(function($qb)
+                {
+                    $qb->orFilter('name', 'Simon');
+                    $qb->orFilter('name', 'Peter');
+                })
+                ->filter('age', '=', 40)
+                ->get();
+        
+        $this->assertSame(1, count($people));
+        $this->assertSame('Peter', $people[0]->name);
+    }
 
 }
