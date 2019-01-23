@@ -4,6 +4,9 @@ This is a **forked version** of pecee/pixie 4.11.0 running on different namespac
 
 ## Major changes
 
+**New in 6.1.0**
+ - Added `filter` and `orFilter` methods.
+
 **New in 6.0.0**
  - Added **findOrFail()** method, which will throw an exception if the query returns NULL.
  - Added **save()** method, that will execute an UPDATE on a record if the primary key is present, otherwise an INSERT will be performed.
@@ -594,9 +597,9 @@ $queryBuilder
     });
 ```
 
-### Where - Filter
+### Filter
 
-`filter` and `orFilter` performs in the same way that `where` and `orWhere` does, however it only takes effect if the supplied argument is not NULL.
+`filter` and `orFilter`methods performs in the same way that `where` and `orWhere` does, however it only takes effect if the supplied argument is not NULL.
 
 ```php
 $name = null;
